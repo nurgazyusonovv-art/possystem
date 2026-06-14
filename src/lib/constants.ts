@@ -40,6 +40,7 @@ export const PAYMENT_METHOD_LABEL: Record<string, string> = {
   cash: "Накта",
   card: "Карта",
   qr: "QR / Перевод",
+  online: "Онлайн",
 };
 
 export const ROLE_LABEL: Record<Role, string> = {

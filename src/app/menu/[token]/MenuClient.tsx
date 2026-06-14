@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   UtensilsCrossed,
   X,
+  CreditCard,
 } from "lucide-react";
 import { getCategories, getProducts, getTableByToken, createOrder } from "@/lib/api";
 import type { CartLine, Product } from "@/lib/types";
@@ -17,6 +18,9 @@ import { som } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/SearchInput";
 import { ProductSheet } from "./ProductSheet";
+
+// Онлайн төлөм env аркылуу күйгүзүлөт (PayBox даяр болгондо)
+const ONLINE_PAY = process.env.NEXT_PUBLIC_ONLINE_PAYMENT === "1";
 
 export function MenuClient({ token }: { token: string }) {
   const isDemo = token === "demo";
@@ -107,6 +111,36 @@ export function MenuClient({ token }: { token: string }) {
       toast.error("Заказ жөнөтүлбөй калды. Кайра аракет кылыңыз.");
       console.error(e);
     } finally {
+      setPlacing(false);
+    }
+  }
+
+  // Заказ түзүп, онлайн төлөмгө (PayBox) багыттайбыз
+  async function placeAndPayOnline() {
+    if (lines.length === 0) return;
+    setPlacing(true);
+    try {
+      const order = await createOrder({
+        tableId: table?.id ?? null,
+        source: "qr",
+        type: "dine_in",
+        lines,
+      });
+      const res = await fetch("/api/payment/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.redirectUrl) {
+        throw new Error(data.error || "Төлөм түзүлбөдү");
+      }
+      window.location.assign(data.redirectUrl);
+    } catch (e) {
+      toast.error(
+        e instanceof Error ? e.message : "Онлайн төлөм ишке ашпады",
+      );
+      console.error(e);
       setPlacing(false);
     }
   }
@@ -351,13 +385,29 @@ export function MenuClient({ token }: { token: string }) {
                 <span>Жалпы</span>
                 <span className="text-primary">{som(total)}</span>
               </div>
+              {ONLINE_PAY && (
+                <Button
+                  size="lg"
+                  className="w-full"
+                  disabled={placing}
+                  onClick={placeAndPayOnline}
+                >
+                  <CreditCard className="size-5" />
+                  {placing ? "Күтө туруңуз…" : "Онлайн төлөө"}
+                </Button>
+              )}
               <Button
                 size="lg"
+                variant={ONLINE_PAY ? "secondary" : "primary"}
                 className="w-full"
                 disabled={placing}
                 onClick={placeOrder}
               >
-                {placing ? "Жөнөтүлүүдө…" : "Заказ берүү"}
+                {placing
+                  ? "Жөнөтүлүүдө…"
+                  : ONLINE_PAY
+                    ? "Кассада төлөө"
+                    : "Заказ берүү"}
               </Button>
             </div>
           </div>
