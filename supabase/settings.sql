@@ -10,9 +10,15 @@ create table if not exists cafe_settings (
   phone text not null default '',
   footer text not null default 'Рахмат! Дагы келиңиз 🙏',
   receipt_width int not null default 80,        -- 58 же 80 мм
+  pay_qr_url text not null default '',           -- онлайн төлөм QR сүрөтү
+  pay_info text not null default '',             -- төлөм маалыматы/номери
   updated_at timestamptz not null default now(),
   constraint cafe_settings_single check (id = 1)  -- бир гана сап
 );
+
+-- Эгер таблица мурда түзүлгөн болсо, жетпеген тилкелерди кошобуз
+alter table cafe_settings add column if not exists pay_qr_url text not null default '';
+alter table cafe_settings add column if not exists pay_info text not null default '';
 
 insert into cafe_settings (id) values (1) on conflict (id) do nothing;
 

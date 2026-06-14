@@ -43,6 +43,8 @@ export interface CafeSettings {
   phone: string;
   footer: string;
   receipt_width: number; // 58 же 80 (мм)
+  pay_qr_url: string; // онлайн төлөм QR сүрөтү (MBANK/O! ж.б.)
+  pay_info: string; // төлөм маалыматы/номери
 }
 
 export interface Staff {

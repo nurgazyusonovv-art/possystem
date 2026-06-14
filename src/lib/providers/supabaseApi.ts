@@ -36,12 +36,17 @@ export async function getProducts(): Promise<Product[]> {
 export async function getSettings(): Promise<CafeSettings> {
   const { data, error } = await supabase()
     .from("cafe_settings")
-    .select("name, address, phone, footer, receipt_width")
+    .select("name, address, phone, footer, receipt_width, pay_qr_url, pay_info")
     .eq("id", 1)
     .maybeSingle();
-  // Таблица әли түзүлө элек болсо — демейкини кайтарабыз (колдонмо бузулбайт)
+  // Таблица/тилке әли түзүлө элек болсо — демейкини кайтарабыз (колдонмо бузулбайт)
   if (error) {
-    if (error.code === "42P01" || error.code === "PGRST205") {
+    if (
+      error.code === "42P01" || // таблица жок
+      error.code === "42703" || // тилке жок
+      error.code === "PGRST205" ||
+      error.code === "PGRST204"
+    ) {
       return DEFAULT_SETTINGS;
     }
     throw error;

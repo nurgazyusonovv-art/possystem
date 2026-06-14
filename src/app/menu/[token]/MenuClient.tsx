@@ -12,7 +12,13 @@ import {
   X,
   CreditCard,
 } from "lucide-react";
-import { getCategories, getProducts, getTableByToken, createOrder } from "@/lib/api";
+import {
+  getCategories,
+  getProducts,
+  getTableByToken,
+  createOrder,
+  getSettings,
+} from "@/lib/api";
 import type { CartLine, Product } from "@/lib/types";
 import { som } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -37,6 +43,10 @@ export function MenuClient({ token }: { token: string }) {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["products"],
     queryFn: getProducts,
+  });
+  const { data: settings } = useQuery({
+    queryKey: ["settings"],
+    queryFn: getSettings,
   });
 
   const [activeCat, setActiveCat] = useState<string | "all">("all");
@@ -197,6 +207,29 @@ export function MenuClient({ token }: { token: string }) {
               Кассага барып төлөм жүргүзүңүз.
             </p>
           </div>
+
+          {/* Онлайн төлөм QR (админден жөндөлсө) */}
+          {(settings?.pay_qr_url || settings?.pay_info) && (
+            <div className="mt-4 w-full rounded-2xl border border-border bg-card p-4">
+              <p className="font-semibold mb-2">Же онлайн төлөңүз:</p>
+              {settings.pay_qr_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={settings.pay_qr_url}
+                  alt="Төлөм QR"
+                  className="mx-auto size-52 rounded-xl object-contain bg-white p-2"
+                />
+              )}
+              {settings.pay_info && (
+                <p className="mt-3 text-sm whitespace-pre-line text-foreground/80">
+                  {settings.pay_info}
+                </p>
+              )}
+              <p className="mt-2 text-xs text-muted-foreground">
+                Төлөгөндөн кийин кассирге көрсөтүңүз.
+              </p>
+            </div>
+          )}
 
           <Button className="mt-6 w-full" onClick={() => setDone(null)}>
             Дагы заказ берүү

@@ -10,6 +10,7 @@ import { printReceipt } from "@/lib/receipt";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input, Textarea } from "@/components/ui/input";
+import { ImageUpload } from "@/components/ImageUpload";
 import type { Order, CafeSettings } from "@/lib/types";
 
 export default function AdminSettingsPage() {
@@ -41,6 +42,8 @@ function SettingsForm({ initial }: { initial: CafeSettings }) {
   const [phone, setPhone] = useState(initial.phone);
   const [footer, setFooter] = useState(initial.footer);
   const [width, setWidth] = useState(initial.receipt_width);
+  const [payQr, setPayQr] = useState(initial.pay_qr_url);
+  const [payInfo, setPayInfo] = useState(initial.pay_info);
   const [saving, setSaving] = useState(false);
 
   function current(): CafeSettings {
@@ -50,6 +53,8 @@ function SettingsForm({ initial }: { initial: CafeSettings }) {
       phone: phone.trim(),
       footer: footer.trim(),
       receipt_width: width,
+      pay_qr_url: payQr,
+      pay_info: payInfo.trim(),
     };
   }
 
@@ -146,19 +151,46 @@ function SettingsForm({ initial }: { initial: CafeSettings }) {
           </div>
         </div>
 
-        <div className="flex gap-2 pt-2">
-          <Button disabled={saving} onClick={save}>
-            <Save className="size-4" /> {saving ? "Сакталууда…" : "Сактоо"}
-          </Button>
-          <Button variant="secondary" onClick={testPrint}>
-            <Printer className="size-4" /> Тест чек басуу
-          </Button>
+      </Card>
+
+      {/* Онлайн төлөм (QR) */}
+      <Card className="p-5 space-y-4">
+        <div>
+          <h2 className="font-semibold">Онлайн төлөм (QR)</h2>
+          <p className="text-sm text-muted-foreground">
+            Кардар QR менюда заказ бергенде бул QR көрсөтүлөт — өз банк
+            колдонмосунда төлөйт (MBANK, O!Деньги, Элсом ж.б.).
+          </p>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Төлөм QR сүрөтү</label>
+          <div className="mt-1">
+            <ImageUpload value={payQr} onChange={setPayQr} />
+          </div>
+        </div>
+        <div>
+          <label className="text-sm font-medium">Төлөм маалыматы</label>
+          <Textarea
+            className="mt-1 min-h-16"
+            value={payInfo}
+            onChange={(e) => setPayInfo(e.target.value)}
+            placeholder="Мисалы: MBANK: +996 700 12 34 56 (Нургазы У.)"
+          />
         </div>
       </Card>
 
+      <div className="flex gap-2">
+        <Button disabled={saving} onClick={save}>
+          <Save className="size-4" /> {saving ? "Сакталууда…" : "Сактоо"}
+        </Button>
+        <Button variant="secondary" onClick={testPrint}>
+          <Printer className="size-4" /> Тест чек басуу
+        </Button>
+      </div>
+
       <p className="text-xs text-muted-foreground">
-        Бул маалыматтар бардык басылган чектерде көрсөтүлөт. «Тест чек» менен
-        принтериңизге туура келерин текшериңиз.
+        Чек маалыматтары бардык басылган чектерде, төлөм QR коду QR менюнун
+        «заказ кабыл алынды» экранында көрсөтүлөт.
       </p>
     </>
   );

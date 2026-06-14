@@ -7,6 +7,8 @@ export const DEFAULT_SETTINGS: CafeSettings = {
   phone: "",
   footer: "Рахмат! Дагы келиңиз 🙏",
   receipt_width: 80,
+  pay_qr_url: "",
+  pay_info: "",
 };
 
 // Чек басууда синхрондуу окуу үчүн модулдук кэш
