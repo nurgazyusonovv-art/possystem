@@ -33,6 +33,8 @@ export const setOrderDiscount = impl.setOrderDiscount;
 export const payOrder = impl.payOrder;
 export const getPayments = impl.getPayments;
 export const uploadImage = impl.uploadImage;
+export const getSettings = impl.getSettings;
+export const updateSettings = impl.updateSettings;
 export const subscribeOrders = impl.subscribeOrders;
 
 /** UI'де демо режимди көрсөтүү үчүн */

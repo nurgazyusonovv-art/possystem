@@ -7,8 +7,10 @@ import type {
   CartLine,
   Staff,
   Payment,
+  CafeSettings,
 } from "../types";
 import type { OrderStatus, ItemStatus, Role } from "../constants";
+import { DEFAULT_SETTINGS } from "../settings";
 
 // ---------------- Меню ----------------
 export async function getCategories(): Promise<Category[]> {
@@ -28,6 +30,33 @@ export async function getProducts(): Promise<Product[]> {
     .order("sort");
   if (error) throw error;
   return data ?? [];
+}
+
+// ---------------- Чек жөндөөлөрү ----------------
+export async function getSettings(): Promise<CafeSettings> {
+  const { data, error } = await supabase()
+    .from("cafe_settings")
+    .select("name, address, phone, footer, receipt_width")
+    .eq("id", 1)
+    .maybeSingle();
+  // Таблица әли түзүлө элек болсо — демейкини кайтарабыз (колдонмо бузулбайт)
+  if (error) {
+    if (error.code === "42P01" || error.code === "PGRST205") {
+      return DEFAULT_SETTINGS;
+    }
+    throw error;
+  }
+  return data ?? DEFAULT_SETTINGS;
+}
+
+export async function updateSettings(
+  patch: Partial<CafeSettings>,
+): Promise<void> {
+  const { error } = await supabase()
+    .from("cafe_settings")
+    .update(patch)
+    .eq("id", 1);
+  if (error) throw error;
 }
 
 // ---------------- Сүрөт жүктөө (Storage) ----------------

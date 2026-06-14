@@ -37,6 +37,14 @@ export interface Profile {
   created_at: string;
 }
 
+export interface CafeSettings {
+  name: string;
+  address: string;
+  phone: string;
+  footer: string;
+  receipt_width: number; // 58 же 80 (мм)
+}
+
 export interface Staff {
   id: string;
   name: string;

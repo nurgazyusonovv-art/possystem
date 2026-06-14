@@ -9,7 +9,9 @@ import type {
   CafeTable,
   Payment,
   Staff,
+  CafeSettings,
 } from "../types";
+import { DEFAULT_SETTINGS } from "../settings";
 import type { OrderStatus, ItemStatus, Role } from "../constants";
 import type { CreateOrderInput } from "./supabaseApi";
 import { fileToDataUrl } from "../image";
@@ -29,6 +31,7 @@ interface DB {
   orders: Order[];
   payments: Payment[];
   staff: Staff[];
+  settings: CafeSettings;
   seq: number;
 }
 
@@ -102,6 +105,7 @@ function seed(): DB {
       { id: uid(), name: "Ашкана", role: "kitchen", pin: "3333", is_active: true, created_at: now() },
       { id: uid(), name: "Официант", role: "waiter", pin: "4444", is_active: true, created_at: now() },
     ],
+    settings: { ...DEFAULT_SETTINGS },
     seq: 1,
   };
 }
@@ -125,6 +129,7 @@ function load(): DB {
       orders: db.orders ?? [],
       payments: db.payments ?? [],
       staff: db.staff && db.staff.length ? db.staff : base.staff,
+      settings: { ...DEFAULT_SETTINGS, ...(db.settings ?? {}) },
       seq: db.seq ?? 1,
     };
   } catch {
@@ -280,6 +285,19 @@ export async function loginWithPin(pin: string): Promise<Staff | null> {
 
 // Демо режимде Auth жок — эч нерсе кылбайт
 export async function signOut(): Promise<void> {}
+
+// ---------------- Чек жөндөөлөрү ----------------
+export async function getSettings(): Promise<CafeSettings> {
+  return { ...DEFAULT_SETTINGS, ...load().settings };
+}
+
+export async function updateSettings(
+  patch: Partial<CafeSettings>,
+): Promise<void> {
+  const db = load();
+  db.settings = { ...DEFAULT_SETTINGS, ...db.settings, ...patch };
+  save(db);
+}
 
 // ---------------- Буйрутмалар ----------------
 function hydrate(db: DB, o: Order): Order {

@@ -10,6 +10,7 @@ import {
   Home,
   Users,
   History,
+  Settings,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RequireRole } from "@/components/RequireRole";
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/admin/history", label: "Заказ тарыхы", icon: History },
   { href: "/admin/tables", label: "Столдор / QR", icon: QrCode },
   { href: "/admin/staff", label: "Кызматкерлер", icon: Users },
+  { href: "/admin/settings", label: "Жөндөөлөр", icon: Settings },
 ];
 
 export default function AdminLayout({

@@ -1,5 +1,6 @@
 import type { Order } from "./types";
-import { CAFE_NAME, PAYMENT_METHOD_LABEL } from "./constants";
+import { PAYMENT_METHOD_LABEL } from "./constants";
+import { cachedSettings } from "./settings";
 
 interface ReceiptOpts {
   method?: "cash" | "card" | "qr";
@@ -11,8 +12,11 @@ interface ReceiptOpts {
 const fmt = (n: number) =>
   Number(n).toLocaleString("ru-RU", { maximumFractionDigits: 0 });
 
-/** 80мм термопринтерге ылайыкталган чекти жаңы терезеде ачып басат */
+/** Термопринтерге (58/80мм) ылайыкталган чекти басат — жөндөөлөр админден */
 export function printReceipt(order: Order, opts: ReceiptOpts) {
+  const cfg = cachedSettings();
+  const width = cfg.receipt_width === 58 ? 58 : 80;
+  const baseFont = width === 58 ? 11 : 12;
   const now = new Date();
   const dt = now.toLocaleString("ru-RU", {
     day: "2-digit",
@@ -38,10 +42,10 @@ export function printReceipt(order: Order, opts: ReceiptOpts) {
 <html lang="ky"><head><meta charset="utf-8"><title>Чек №${order.number}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { width:80mm; font-family:"Courier New",monospace; font-size:12px; color:#000; padding:4mm; }
+  body { width:${width}mm; font-family:"Courier New",monospace; font-size:${baseFont}px; color:#000; padding:${width === 58 ? 2 : 4}mm; }
   .center { text-align:center; }
-  .title { font-size:16px; font-weight:bold; }
-  .muted { color:#333; font-size:11px; }
+  .title { font-size:${width === 58 ? 14 : 16}px; font-weight:bold; }
+  .muted { color:#333; font-size:${baseFont - 1}px; }
   hr { border:none; border-top:1px dashed #000; margin:6px 0; }
   table { width:100%; border-collapse:collapse; }
   th,td { padding:2px 0; font-size:11px; }
@@ -56,7 +60,9 @@ export function printReceipt(order: Order, opts: ReceiptOpts) {
 </style></head>
 <body>
   <div class="center">
-    <div class="title">${escapeHtml(CAFE_NAME)}</div>
+    <div class="title">${escapeHtml(cfg.name)}</div>
+    ${cfg.address ? `<div class="muted">${escapeHtml(cfg.address)}</div>` : ""}
+    ${cfg.phone ? `<div class="muted">тел: ${escapeHtml(cfg.phone)}</div>` : ""}
     ${opts.preliminary ? `<div class="muted"><b>АЛДЫН АЛА ЭСЕП</b></div>` : ""}
     <div class="muted">${dt}</div>
   </div>
@@ -95,9 +101,8 @@ export function printReceipt(order: Order, opts: ReceiptOpts) {
     ${
       opts.preliminary
         ? "Бул алдын ала эсеп — төлөм эмес"
-        : "Рахмат! Дагы келиңиз 🙏"
-    }<br>
-    ${escapeHtml(CAFE_NAME)}
+        : escapeHtml(cfg.footer)
+    }
   </div>
 </body></html>`;
 
