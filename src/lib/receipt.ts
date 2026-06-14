@@ -99,16 +99,47 @@ export function printReceipt(order: Order, opts: ReceiptOpts) {
     }<br>
     ${escapeHtml(CAFE_NAME)}
   </div>
-  <script>window.onload=function(){window.print();setTimeout(function(){window.close()},300);};</script>
 </body></html>`;
 
-  const w = window.open("", "_blank", "width=380,height=600");
-  if (!w) {
-    alert("Принтер терезеси ачылбады. Браузерде попап'ка уруксат бериңиз.");
+  // Жашыруун iframe аркылуу басабыз — popup блок болбойт, авто-басуу да иштейт
+  const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
+  iframe.style.position = "fixed";
+  iframe.style.right = "0";
+  iframe.style.bottom = "0";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "0";
+  document.body.appendChild(iframe);
+
+  const doc = iframe.contentWindow?.document;
+  if (!doc) {
+    document.body.removeChild(iframe);
     return;
   }
-  w.document.write(html);
-  w.document.close();
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  let printed = false;
+  const doPrint = () => {
+    if (printed) return;
+    printed = true;
+    try {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    } catch {
+      /* басуу мүмкүн болбоду — этибар жок */
+    }
+    // Басуудан кийин iframe'ди алып салабыз
+    setTimeout(() => {
+      if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+    }, 1500);
+  };
+
+  iframe.onload = doPrint;
+  // onload иштебесе — резерв
+  setTimeout(doPrint, 500);
 }
 
 function escapeHtml(s: string): string {

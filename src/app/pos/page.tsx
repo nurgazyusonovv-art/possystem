@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { PaymentModal } from "@/components/PaymentModal";
 import { ConfirmOrderDialog } from "@/components/ConfirmOrderDialog";
 import { playOrderReady } from "@/lib/sound";
+import { printReceipt } from "@/lib/receipt";
 import { RequireRole } from "@/components/RequireRole";
 import { UserChip } from "@/components/UserChip";
 import { SearchInput } from "@/components/SearchInput";
@@ -185,6 +186,27 @@ function NewOrder() {
         received: total,
         createdBy: session?.id ?? null,
       });
+      // Чекти автоматтык принтке жөнөтөбүз
+      const receiptOrder = {
+        number: order.number,
+        table: selectedTable,
+        type: takeaway ? "takeaway" : "dine_in",
+        subtotal: total,
+        discount: 0,
+        total,
+        items: lines.map((l, i) => ({
+          id: String(i),
+          order_id: order.id,
+          product_id: l.product.id,
+          name: l.product.name,
+          price: l.product.price,
+          qty: l.qty,
+          status: "pending",
+          note: l.note ?? null,
+          created_at: "",
+        })),
+      } as unknown as Order;
+      printReceipt(receiptOrder, { method, received: total, change: 0 });
       toast.success(`Буйрутма №${order.number} төлөндү`);
       setCart({});
       setTableId(null);
