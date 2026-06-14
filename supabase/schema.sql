@@ -44,6 +44,16 @@ create table if not exists profiles (
   created_at timestamptz not null default now()
 );
 
+-- ---------- Кызматкерлер (PIN менен кирүү) ----------
+create table if not exists staff (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  role text not null default 'waiter',       -- admin | cashier | waiter | kitchen
+  pin text not null,
+  is_active boolean not null default true,
+  created_at timestamptz not null default now()
+);
+
 -- ---------- Буйрутмалар ----------
 create table if not exists orders (
   id uuid primary key default gen_random_uuid(),
@@ -56,7 +66,7 @@ create table if not exists orders (
   subtotal numeric(10,2) not null default 0,
   discount numeric(10,2) not null default 0,
   total numeric(10,2) not null default 0,
-  created_by uuid references profiles(id),
+  created_by uuid references staff(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -82,7 +92,7 @@ create table if not exists payments (
   amount numeric(10,2) not null,
   received numeric(10,2),
   change numeric(10,2),
-  created_by uuid references profiles(id),
+  created_by uuid references staff(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
@@ -118,6 +128,7 @@ create trigger trg_recalc_totals
 -- ============================================================
 alter publication supabase_realtime add table orders;
 alter publication supabase_realtime add table order_items;
+alter publication supabase_realtime add table payments;
 
 -- ============================================================
 -- RLS (баштапкы: жөнөкөй. Продакшнда катаалдатуу керек)
@@ -129,6 +140,7 @@ alter table orders enable row level security;
 alter table order_items enable row level security;
 alter table payments enable row level security;
 alter table profiles enable row level security;
+alter table staff enable row level security;
 
 -- Меню баарына окууга ачык (QR кардарлар үчүн)
 create policy "menu_public_read" on products for select using (true);
@@ -143,3 +155,4 @@ create policy "categories_write" on categories for all using (true) with check (
 create policy "products_write" on products for all using (true) with check (true);
 create policy "tables_write" on cafe_tables for all using (true) with check (true);
 create policy "profiles_read" on profiles for select using (true);
+create policy "staff_all" on staff for all using (true) with check (true);
