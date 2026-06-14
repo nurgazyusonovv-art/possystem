@@ -194,6 +194,26 @@ alter table payments drop constraint if exists payments_created_by_fkey;
 alter table payments add constraint payments_created_by_fkey
   foreign key (created_by) references profiles(id) on delete set null;
 
+-- ------------------------------------------------------------
+-- 7) Сумма триггери SECURITY DEFINER болсун
+-- (анон/QR заказы үчүн да суммасы RLS'ке карабай эсептелсин)
+-- ------------------------------------------------------------
+create or replace function recalc_order_totals() returns trigger
+language plpgsql security definer set search_path = public
+as $$
+declare oid uuid := coalesce(new.order_id, old.order_id); sub numeric(10,2);
+begin
+  select coalesce(sum(price * qty), 0) into sub from order_items where order_id = oid;
+  update orders set subtotal = sub, total = greatest(sub - discount, 0), updated_at = now()
+  where id = oid;
+  return null;
+end; $$;
+
+-- Бузук (0 болуп калган) заказдардын суммасын кайра эсептейбиз
+update orders o set subtotal = x.s, total = greatest(x.s - o.discount, 0)
+from (select order_id, coalesce(sum(price * qty), 0) s from order_items group by order_id) x
+where o.id = x.order_id and o.subtotal <> x.s;
+
 -- ============================================================
 -- ДАЯР. Эми:
 --  • Кызматкерлер PIN менен кирет (Supabase Auth)

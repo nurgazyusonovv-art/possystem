@@ -103,7 +103,13 @@ create index if not exists idx_order_items_order on order_items(order_id);
 -- ============================================================
 -- Буйрутманын суммасын автоматтык эсептөө
 -- ============================================================
-create or replace function recalc_order_totals() returns trigger as $$
+-- SECURITY DEFINER: триггер RLS'ти айланып, анон (QR кардар) заказы үчүн да
+-- суммасын эсептейт.
+create or replace function recalc_order_totals() returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
 declare
   oid uuid := coalesce(new.order_id, old.order_id);
   sub numeric(10,2);
@@ -116,7 +122,7 @@ begin
   where id = oid;
   return null;
 end;
-$$ language plpgsql;
+$$;
 
 drop trigger if exists trg_recalc_totals on order_items;
 create trigger trg_recalc_totals

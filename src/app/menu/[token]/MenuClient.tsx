@@ -40,7 +40,11 @@ export function MenuClient({ token }: { token: string }) {
   const [cart, setCart] = useState<Record<string, CartLine>>({});
   const [cartOpen, setCartOpen] = useState(false);
   const [placing, setPlacing] = useState(false);
-  const [done, setDone] = useState<number | null>(null);
+  const [done, setDone] = useState<{
+    number: number;
+    lines: CartLine[];
+    total: number;
+  } | null>(null);
   const [detail, setDetail] = useState<Product | null>(null);
 
   const available = products.filter((p) => p.is_available);
@@ -86,6 +90,9 @@ export function MenuClient({ token }: { token: string }) {
   async function placeOrder() {
     if (lines.length === 0) return;
     setPlacing(true);
+    // Заказдын тизмесин/суммасын тазалоодон мурда сактайбыз
+    const placedLines = lines;
+    const placedTotal = total;
     try {
       const order = await createOrder({
         tableId: table?.id ?? null,
@@ -93,7 +100,7 @@ export function MenuClient({ token }: { token: string }) {
         type: "dine_in",
         lines,
       });
-      setDone(order.number);
+      setDone({ number: order.number, lines: placedLines, total: placedTotal });
       setCart({});
       setCartOpen(false);
     } catch (e) {
@@ -111,15 +118,56 @@ export function MenuClient({ token }: { token: string }) {
 
   if (done !== null) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
-        <CheckCircle2 className="size-20 text-success" />
-        <h1 className="mt-5 text-2xl font-bold">Заказ кабыл алынды!</h1>
-        <p className="mt-1 text-muted-foreground">
-          Буйрутма №{done} ашканага жөнөтүлдү.
-        </p>
-        <Button className="mt-7" onClick={() => setDone(null)}>
-          Дагы заказ берүү
-        </Button>
+      <div className="flex-1 flex flex-col items-center px-4 py-8 overflow-y-auto">
+        <div className="w-full max-w-md flex flex-col items-center text-center">
+          <CheckCircle2 className="size-20 text-success" />
+          <h1 className="mt-5 text-2xl font-bold">Заказ кабыл алынды!</h1>
+          <p className="mt-1 text-muted-foreground">
+            Буйрутма №{done.number} ашканага жөнөтүлдү
+          </p>
+
+          {/* Заказдын тизмеси */}
+          <div className="mt-6 w-full rounded-2xl border border-border bg-card p-4 text-left">
+            <ul className="space-y-2">
+              {done.lines.map((l) => (
+                <li
+                  key={l.product.id}
+                  className="flex justify-between gap-3 text-sm"
+                >
+                  <span>
+                    <span className="font-semibold text-primary">
+                      {l.qty}×
+                    </span>{" "}
+                    {l.product.name}
+                  </span>
+                  <span className="whitespace-nowrap text-muted-foreground">
+                    {som(l.product.price * l.qty)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-3 pt-3 border-t border-border flex justify-between items-center">
+              <span className="font-medium">Жалпы</span>
+              <span className="text-xl font-bold text-primary">
+                {som(done.total)}
+              </span>
+            </div>
+          </div>
+
+          {/* Кассага баруу билдирүүсү */}
+          <div className="mt-4 w-full rounded-2xl bg-primary/10 px-4 py-4">
+            <p className="font-semibold text-primary">
+              Буйрутмаңыз үчүн рахмат! 🙏
+            </p>
+            <p className="text-sm text-foreground/80 mt-0.5">
+              Кассага барып төлөм жүргүзүңүз.
+            </p>
+          </div>
+
+          <Button className="mt-6 w-full" onClick={() => setDone(null)}>
+            Дагы заказ берүү
+          </Button>
+        </div>
       </div>
     );
   }
